@@ -93,7 +93,7 @@ async def producer(queue, page_list):
 
 async def create_sheet():
     workbook = openpyxl.Workbook()
-    sheet = workbook.active
+    sheet = workbook['Sheet1']
     sheet.cell(row=1, column=1).value = 'Amount'
     sheet.cell(row=1, column=2).value = 'UserName'
     sheet.cell(row=1, column=3).value = 'ID'
@@ -126,16 +126,17 @@ async def consumer(queue):
     wb.save('comments.xlsx')
 
 
+# 定义主函数
 async def main():
-    ID = 848824
-    num = 25
-    page_list = await get_params(ID, num)
-    queue = asyncio.Queue()
-    await Replenish()
+    ID = 848824  # 商品ID
+    num = 25  # 页数
+    page_list = await get_params(ID, num)  # 获取params, 每个是一页
+    queue = asyncio.Queue()  # 创建队列
+    await Replenish()  # 获取代理列表
     print(f"params以及代理ip获取完毕 进入生产者消费者模式！\n代理列表（{len(proxies)}）个", proxies)
     consumer_task = asyncio.create_task(consumer(queue))
     await producer(queue, page_list)
-    await queue.put(None)
+    await queue.put(None)  # 最后留None让Consumer停止
     await consumer_task
     print("生产者消费者都已完成！")
 

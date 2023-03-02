@@ -45,5 +45,4 @@ def get_proxy():
 
 
 if __name__ == "__main__":
-    proxys_list = get_proxy()
-
+    print("hello world!")
