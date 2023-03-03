@@ -40,7 +40,7 @@ def get_proxy():
     proxy_list = res["data"]["proxy_list"]
     proxys = []
     for proxy in proxy_list:
-        proxys.append("http://"+proxy.split(",", 1)[0])
+        proxys.append("http://" + proxy.split(",", 1)[0])
     return proxys
 
 
