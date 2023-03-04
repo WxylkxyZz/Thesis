@@ -33,7 +33,7 @@ def md5(string):
 
 
 def get_proxy():
-    num = 3
+    num = 10
     link = generate_proxy_api_link(num)
     headers = {'User_Agents': random.choice(user_agents)}
     res = requests.get(url=link, headers=headers).json()

@@ -1,21 +1,19 @@
+import time
+
 import pandas as pd
 import numpy as np
 import jieba
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from gensim import corpora, models
 
 def data_clearing():
     # 读取Excel文件
-    df = pd.read_excel('comments.xlsx')
+    df = pd.read_excel('./document/comments.xlsx')
 
     # 空值处理
     df = df.dropna(subset=['Comment'])
-
-    # 删除重复数据 根据用户id与comment两列作为参照，如存在用户id与comment同时相同，那么只保留最开始出现的。
-    df.drop_duplicates(subset=['ID', 'Comment'], keep='first', inplace=True)
-    # 重置索引
-    df.reset_index(drop=True, inplace=True)
 
     # 剔除纯数字评论，先将其转为空字符串，之后对空字符串统一处理。  用空字符串('')替换纯数字('123')
     df['Comment'] = df['Comment'].str.replace('^[0-9]*$', '', regex=True)
@@ -69,10 +67,11 @@ def participle():
     stopwords = []
     with open('./document/stopwords.txt', 'r', encoding='utf-8') as f:
         stopwords = [line.strip() for line in f.readlines()]
-
+    stopwords.append('\n')
+    stopwords.append('"')
+    stopwords.append(' ')
     # 读取Excel文件
     df = pd.read_excel('./document/cleaned_comments.xlsx')
-
     # 对评论文本进行分词
     df['cut_comment'] = df['Comment'].apply(lambda x: [word for word in jieba.cut(x) if word not in stopwords])
 
@@ -80,6 +79,7 @@ def participle():
     words_count = Counter([word for words in df['cut_comment'] for word in words])
     words_count_df = pd.DataFrame(list(words_count.items()), columns=['word', 'count'])
     words_count_df = words_count_df.sort_values(by='count', ascending=False)
+    print(f"词频统计表共{len(words_count_df)}")
     words_count_df.to_csv('./document/words_count.txt', index=False, sep='\t')
     # 生成词云图
     wordcloud = WordCloud(font_path='msyh.ttc', background_color='white', max_words=200, max_font_size=60,
@@ -90,7 +90,41 @@ def participle():
     plt.savefig('./document/词云图.jpg')
     df.to_excel('./document/comments_tokenized.xlsx', index=False)
 
+def lda_model():
+    # 读入数据
+    df = pd.read_excel('./document/comments_tokenized.xlsx')
+    corpus = df['cut_comment'].apply(lambda x: x.split()).tolist()
+
+    # 建立文本词袋
+    dictionary = corpora.Dictionary(corpus)
+    doc_term_matrix = [dictionary.doc2bow(doc) for doc in corpus]
+
+    # 训练LDA模型
+    # 设置主题数
+    num_topics = 3
+    # 建立LDA模型
+    ldamodel = models.ldamodel.LdaModel(doc_term_matrix, num_topics=num_topics, id2word=dictionary, passes=50)
+
+    # 获取主题及对应的词语和概率
+    topics = ldamodel.print_topics(num_topics=num_topics, num_words=10)
+    for topic in topics:
+        print(topic)
+
+    # 将结果写入excel中
+    # 获取各主题及其对应的关键词和概率
+    # topic_df = pd.DataFrame()
+    # for idx, topic in topics:
+    #     keywords = topic.split('+')
+    #     keywords = [word.split('*') for word in keywords]
+    #     keywords = [(word[1].replace('"', '').strip(), float(word[0])) for word in keywords]
+    #     topic_df = topic_df.append({'Topic': idx, 'Keywords': keywords}, ignore_index=True)
+    #
+    # # 将结果写入excel中
+    # topic_df.to_excel('result.xlsx', index=False)
+
 
 if __name__ == "__main__":
     # data_clearing()
-    participle()
+    # participle()
+    # time.sleep(5)
+    lda_model()
