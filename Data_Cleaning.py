@@ -1,130 +1,112 @@
-import time
-
-import pandas as pd
 import numpy as np
-import jieba
+import pandas as pd
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from collections import Counter
-from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-from gensim import corpora, models
-
-def data_clearing():
-    # 读取Excel文件
-    df = pd.read_excel('./document/comments.xlsx')
-
-    # 空值处理
-    df = df.dropna(subset=['Comment'])
-
-    # 剔除纯数字评论，先将其转为空字符串，之后对空字符串统一处理。  用空字符串('')替换纯数字('123')
-    df['Comment'] = df['Comment'].str.replace('^[0-9]*$', '', regex=True)
-
-    # 剔除单一重复字符的评论  用空字符串('')替换('111','aaa','....')等
-    df['Comment'] = df['Comment'].str.replace(r'^(.)\1*$', '', regex=True)
-
-    # 将评论中的时间转为空字符 用空字符串('')替换('2020/11/20 20:00:00')等
-    df['Comment'] = df['Comment'].str.replace(r'\d+/\d+/\d+ \d+:\d+:\d+', '', regex=True)
-
-    # 获取评论文本数据所在的列
-    df_comment = df['Comment']
-
-    # 对开头连续重复的部分进行压缩 效果：‘aaabdc’—>‘adbc’，‘很好好好好’—‘很好’
-    # 将开头连续重复的部分替换为空''
-    prefix_series = df_comment.str.replace(r'(.)\1+$', '', regex=True)
-    # 将结尾连续重复的部分替换为空''
-    suffix_series = df_comment.str.replace(r'^(.)\1+', '', regex=True)
-    for index in range(len(df_comment)):
-        # 对开头连续重复的只保留重复内容的一个字符(如'aaabdc'->'abdc')
-        if prefix_series[index] != df_comment[index]:
-            char = df_comment[index][-1]
-            df_comment[index] = prefix_series[index] + char
-        # 对结尾连续重复的只保留重复内容的一个字符(如'bdcaaa'->'bdca')
-        elif suffix_series[index] != df_comment[index]:
-            char = df_comment[index][0]
-            df_comment[index] = char + suffix_series[index]
-    # 将空字符串转为’np.nan’,在使用dropna（）来进行删除
-    # 将空字符串转为'np.nan',即NAN,用于下一步删除这些评论
-    df['Comment'].replace(to_replace=r'^\s*$', value=np.nan, regex=True, inplace=True)
-
-    # 删除comment中的空值，并重置索引
-    df = df.dropna(subset=['Comment'])
-    df.reset_index(drop=True, inplace=True)
-
-    # 删除无关数据
-    # 根据实际情况，可以使用模糊匹配或关键词过滤等方法来删除无关数据
-    # 例如，如果数据中有“广告”、“垃圾”等关键词，可以使用以下方法删除：
-    df = df[~df['Comment'].str.contains('广告|垃圾')]
-
-    # 删除无效数据
-    # 如果数据中有缺失值或者不合理的值，可以使用以下方法删除：
-    df.dropna(inplace=True)
-
-    # 保存清洗后的数据
-    df.to_excel('./document/cleaned_comments.xlsx', index=False)
 
 
-def participle():
-    # 加载停用词
-    stopwords = []
-    with open('./document/stopwords.txt', 'r', encoding='utf-8') as f:
-        stopwords = [line.strip() for line in f.readlines()]
-    stopwords.append('\n')
-    stopwords.append('"')
-    stopwords.append(' ')
-    # 读取Excel文件
-    df = pd.read_excel('./document/cleaned_comments.xlsx')
-    # 对评论文本进行分词
-    df['cut_comment'] = df['Comment'].apply(lambda x: [word for word in jieba.cut(x) if word not in stopwords])
+def download_NLTK():  # 下载必要的 NLTK 数据
+    # 下载必要的 NLTK 数据
+    nltk.download('punkt')
+    nltk.download('stopwords')
+    nltk.download('wordnet')
 
-    # 生成词频统计表
-    words_count = Counter([word for words in df['cut_comment'] for word in words])
-    words_count_df = pd.DataFrame(list(words_count.items()), columns=['word', 'count'])
-    words_count_df = words_count_df.sort_values(by='count', ascending=False)
-    print(f"词频统计表共{len(words_count_df)}")
-    words_count_df.to_csv('./document/words_count.txt', index=False, sep='\t')
-    # 生成词云图
-    wordcloud = WordCloud(font_path='msyh.ttc', background_color='white', max_words=200, max_font_size=60,
-                          random_state=42).generate_from_frequencies(words_count)
-    plt.figure(figsize=(12, 8))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.savefig('./document/词云图.jpg')
-    df.to_excel('./document/comments_tokenized.xlsx', index=False)
 
-def lda_model():
-    # 读入数据
-    df = pd.read_excel('./document/comments_tokenized.xlsx')
-    corpus = df['cut_comment'].apply(lambda x: x.split()).tolist()
+def data_cleaning(data_source_path, result_deposit_path):
+    # 读取 Excel 文件
+    df = pd.read_excel(data_source_path + "comments.xlsx")
 
-    # 建立文本词袋
-    dictionary = corpora.Dictionary(corpus)
-    doc_term_matrix = [dictionary.doc2bow(doc) for doc in corpus]
+    # 删除空值行
+    df.dropna(subset=['Comment'], inplace=True)
 
-    # 训练LDA模型
-    # 设置主题数
-    num_topics = 3
-    # 建立LDA模型
-    ldamodel = models.ldamodel.LdaModel(doc_term_matrix, num_topics=num_topics, id2word=dictionary, passes=50)
+    # 去除重复评论
+    df.drop_duplicates(subset=['Comment'], keep='first', inplace=True)
 
-    # 获取主题及对应的词语和概率
-    topics = ldamodel.print_topics(num_topics=num_topics, num_words=10)
-    for topic in topics:
-        print(topic)
+    # 创建 DataFrame 副本
+    df_clean = df.copy()
 
-    # 将结果写入excel中
-    # 获取各主题及其对应的关键词和概率
-    # topic_df = pd.DataFrame()
-    # for idx, topic in topics:
-    #     keywords = topic.split('+')
-    #     keywords = [word.split('*') for word in keywords]
-    #     keywords = [(word[1].replace('"', '').strip(), float(word[0])) for word in keywords]
-    #     topic_df = topic_df.append({'Topic': idx, 'Keywords': keywords}, ignore_index=True)
-    #
-    # # 将结果写入excel中
-    # topic_df.to_excel('result.xlsx', index=False)
+    # 清理评论文本
+    df_clean['Cleaned Comment'] = df_clean['Comment'].apply(clean_text)
+
+    # 删除空白行
+    df_clean.dropna(subset=['Cleaned Comment'], inplace=True)
+
+    # 去除字符串中的空格和其他字符
+    df_clean['Cleaned Comment'] = df_clean['Cleaned Comment'].str.strip()
+    df_clean = df_clean.replace('', np.nan)
+
+    # 再次删除空白行
+    df_clean.dropna(subset=['Cleaned Comment'], inplace=True)
+
+    # 剔除纯数字或纯字母评论
+    df_clean = df_clean[~df_clean['Cleaned Comment'].str.match(r'^\d+$|^[a-zA-Z]+$')]
+
+    # 保存清洗后的数据到新的 Excel 文件
+    df_clean.to_excel(result_deposit_path + 'cleaned_comments.xlsx', index=False)
+
+    # 分析函数
+    data_analyze(df_clean, result_deposit_path)
+
+
+# 定义清理函数
+def clean_text(text):
+    # 将文本转换为小写
+    text = text.lower()
+    # 去除标点符号、数字和特殊字符
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\d+', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    # 去除停用词
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(text)
+    filtered_text = [word for word in word_tokens if word not in stop_words]
+    # 词形还原
+    lemmatizer = WordNetLemmatizer()
+    lemmatized_text = [lemmatizer.lemmatize(word) for word in filtered_text]
+    # 去除多余的空格和换行符
+    cleaned_text = ' '.join(lemmatized_text).strip()
+    return cleaned_text
+
+    # 对清洗后的评论进行分析
+
+
+def data_analyze(df_clean, result_deposit_path):
+    # 统计评论数量、平均长度等基本信息
+    print(f"Total number of comments: {len(df_clean)}")
+    print(f"Average length of comments: {df_clean['Cleaned Comment'].str.len().mean():.2f}")
+    # 统计最常见的词汇
+    all_words = []
+    for comment in df_clean['Cleaned Comment']:
+        all_words += word_tokenize(comment)
+
+    stop_words = stopwords.words('english')
+    filtered_words = [word.lower() for word in all_words if word.lower() not in stop_words and word.isalpha()]
+
+    word_freq = Counter(filtered_words)
+    most_common_words = word_freq.most_common(10)
+
+    print("Most common words:")
+    for word, freq in most_common_words:
+        print(f"{word}: {freq}")
+
+    # 取前10个最常见的词汇
+    top_words = [word[0] for word in most_common_words]
+    top_word_freq = [word[1] for word in most_common_words]
+
+    # 生成柱状图
+    plt.rcParams['font.family'] = ['SimHei']  # 将字体设置为 SimHei
+    plt.bar(top_words, top_word_freq)
+    plt.title("Top 10 Most Frequent Words")
+    plt.xlabel("Words")
+    plt.ylabel("Frequency")
+    plt.savefig(result_deposit_path + 'top_words_frequency.png')
 
 
 if __name__ == "__main__":
-    # data_clearing()
-    # participle()
-    # time.sleep(5)
-    lda_model()
+    data_source_path = './Data/'
+    result_deposit_path = './Result/'
+    data_cleaning(data_source_path, result_deposit_path)

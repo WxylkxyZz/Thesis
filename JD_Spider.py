@@ -107,11 +107,11 @@ async def create_sheet():
     sheet.cell(row=1, column=4).value = 'ReferenceName'
     sheet.cell(row=1, column=5).value = 'Score'
     sheet.cell(row=1, column=6).value = 'Comment'
-    workbook.save('./document/comments.xlsx')
+    workbook.save('./Data/comments.xlsx')
 
 
 async def consumer(queue):
-    wb = openpyxl.load_workbook('document/comments.xlsx')
+    wb = openpyxl.load_workbook('Data/comments.xlsx')
     i = 1
     sheet = wb.active
     while True:
