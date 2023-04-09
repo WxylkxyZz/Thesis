@@ -1,12 +1,12 @@
-import numpy as np
-import pandas as pd
 import re
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
 from collections import Counter
 import matplotlib.pyplot as plt
+import nltk
+import numpy as np
+import pandas as pd
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
 
 def download_NLTK():  # 下载必要的 NLTK 数据
