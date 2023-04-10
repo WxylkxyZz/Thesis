@@ -11,13 +11,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
-
-
-# 下载必要的 NLTK 数据
-def download_NLTK():
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    nltk.download('wordnet')
+import jieba.posseg as pseg
 
 
 # 数据清洗主函数
@@ -62,12 +56,17 @@ def clean_text(text):
     # 将文本转换为小写
     text = text.lower()
     # 去除标点符号、数字和特殊字符
-    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'[^\w\s]', ' ', text)
     text = re.sub(r'\d+', '', text)
     text = re.sub(r'\s+', ' ', text)
 
-    # 去除停用词
-    stop_words = set(stopwords.words('english'))
+    # 加载停用词表
+    stopwords_path = data_source_path + 'cn_stopwords.txt'
+    stop_words = set()
+    with open(stopwords_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            stop_words.add(line.strip())
+
     word_tokens = word_tokenize(text)
     filtered_text = [word for word in word_tokens if word not in stop_words]
     # 词形还原
@@ -89,7 +88,13 @@ def data_analyze(df_clean, result_deposit_path):
     for comment in df_clean['Cleaned Comment']:
         all_words += word_tokenize(comment)
 
-    stop_words = stopwords.words('english')
+    print(all_words)
+    stopwords_path = data_source_path + 'cn_stopwords.txt'
+    stop_words = set()
+    with open(stopwords_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            stop_words.add(line.strip())
+    stop_words.update(['hellip'])
     filtered_words = [word.lower() for word in all_words if word.lower() not in stop_words and word.isalpha()]
 
     word_freq = Counter(filtered_words)
@@ -120,9 +125,20 @@ def data_segmentation(data_source_path, result_deposit_path):
     with open(stopwords_path, 'r', encoding='utf-8') as f:
         for line in f:
             stopwords.add(line.strip())
-
     # 添加自定义停用词
-    stopwords.update(["喝", "买", "非常", '东方', '树叶', '饮料', '没有', '很', ' ', '好', '都', '不', '喜欢', '购买', '特别', '一直','夏天'])
+    stopwords.update(
+        ['哈哈哈', "喝", '不错', '喜欢', "买", "非常", '东方', '树叶', '饮料', '没有', '很', ' ', '好', '都', '不',
+         '购买',
+         '特别', '一直', '夏天', 'hellip', 'helliphellip', 'hellip', '第二天', '茉莉花', '茉莉花茶', '乌龙茶', '普洱茶',
+         '红茶', '绿茶', '农夫山泉', '越来越', '京东', '冰箱', '茶', '很快', '茶饮料', '淡淡的', '会', '普洱', '起来',
+         '这款', '款'])
+
+    # # 对评论文本进行分词并去除停用词并且词性标注
+    # def segment(text):
+    #     text = re.sub(r'\s+', ' ', text)  # 去除多余的空格
+    #     words = pseg.cut(text)
+    #     words = [word.word + '/' + word.flag for word in words if word.word not in stopwords]
+    #     return ' '.join(words)
 
     # 对评论文本进行分词并去除停用词
     def segment(text):
@@ -139,7 +155,7 @@ def data_segmentation(data_source_path, result_deposit_path):
         words += text.split()
     word_counts = pd.Series(words).value_counts()
     # 输出词频最高的前10个词语
-    print(word_counts.head(10))
+    print(word_counts.head(30))
 
     # 生成词云图并保存到本地
     backgroud_Image = np.array(Image.open(data_source_path + 'backgrand.jpg'))
@@ -162,8 +178,21 @@ def data_segmentation(data_source_path, result_deposit_path):
     wb.save(result_deposit_path + "word_counts.xlsx")
 
 
+def pos_or_neg(result_deposit_path):
+
+    # 读取excel文件
+    df = pd.read_excel(result_deposit_path+'segmented_comments.xlsx')
+
+    # 将Score列转换为新的一列Sentiment
+    df['Sentiment'] = df['Score'].apply(lambda x: 'pos' if x == 5 else 'neg')
+
+    # 保存修改后的结果到excel文件
+    df.to_excel(result_deposit_path+'segmented_comments.xlsx', index=False)
+
+
 if __name__ == "__main__":
     data_source_path = './Data/'
     result_deposit_path = './Result/'
     # data_cleaning(data_source_path, result_deposit_path)
-    data_segmentation(data_source_path, result_deposit_path)
+    # data_segmentation(data_source_path, result_deposit_path)
+    pos_or_neg(result_deposit_path)
