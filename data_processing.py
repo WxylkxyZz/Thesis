@@ -122,7 +122,7 @@ def data_segmentation(data_source_path, result_deposit_path):
             stopwords.add(line.strip())
 
     # 添加自定义停用词
-    stopwords.update(["喝", "买", "非常", '东方', '树叶', '饮料', '没有', '很', ' ', '好', '都', '不', '喜欢'])
+    stopwords.update(["喝", "买", "非常", '东方', '树叶', '饮料', '没有', '很', ' ', '好', '都', '不', '喜欢', '购买', '特别', '一直','夏天'])
 
     # 对评论文本进行分词并去除停用词
     def segment(text):
