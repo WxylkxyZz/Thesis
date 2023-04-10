@@ -60,6 +60,7 @@ def clean_text(text):
     text = re.sub(r'[^\w\s]', '', text)
     text = re.sub(r'\d+', '', text)
     text = re.sub(r'\s+', ' ', text)
+
     # 去除停用词
     stop_words = set(stopwords.words('english'))
     word_tokens = word_tokenize(text)
@@ -68,12 +69,12 @@ def clean_text(text):
     lemmatizer = WordNetLemmatizer()
     lemmatized_text = [lemmatizer.lemmatize(word) for word in filtered_text]
     # 去除多余的空格和换行符
-    cleaned_text = ' '.join(lemmatized_text).strip()
+    cleaned_text = ' '.join(lemmatized_text)
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
     return cleaned_text
 
-    # 对清洗后的评论进行分析
 
-
+# 对清洗后的评论进行分析
 def data_analyze(df_clean, result_deposit_path):
     # 统计评论数量、平均长度等基本信息
     print(f"Total number of comments: {len(df_clean)}")
