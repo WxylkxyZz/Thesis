@@ -1,20 +1,21 @@
-# -*- coding: utf-8 -*-
-
-# 代码12-9 建立词典及语料库
-
 import pandas as pd
 import numpy as np
 import re
 import itertools
 import matplotlib.pyplot as plt
+from gensim import corpora, models
+import pandas as pd
+import gensim
+from gensim import corpora, models
+from nltk.corpus import stopwords
+import pyLDAvis.gensim
+from matplotlib.font_manager import FontProperties
 
 data_source_path = './Data/'
 result_deposit_path = './Result/'
 # 载入情感分析后的数据
-posdata = pd.read_csv(result_deposit_path+"posdata.csv", encoding='GBK')
-negdata = pd.read_csv(result_deposit_path+"negdata.csv", encoding='GBK')
-
-from gensim import corpora, models
+posdata = pd.read_csv(result_deposit_path + "posdata.csv", encoding='GBK')
+negdata = pd.read_csv(result_deposit_path + "negdata.csv", encoding='GBK')
 
 # 建立词典
 pos_dict = corpora.Dictionary([[i] for i in posdata['word']])  # 正面
@@ -89,8 +90,6 @@ pos_k = lda_k(pos_corpus, pos_dict)
 neg_k = lda_k(neg_corpus, neg_dict)
 
 # 绘制主题平均余弦相似度图形
-from matplotlib.font_manager import FontProperties
-
 font = FontProperties(size=14)
 # 解决中文显示问题
 plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -104,58 +103,24 @@ ax1.set_xlabel('正面评论LDA主题数寻优', fontproperties=font)
 ax2 = fig.add_subplot(212)
 ax2.plot(neg_k)
 ax2.set_xlabel('负面评论LDA主题数寻优', fontproperties=font)
-fig.savefig(result_deposit_path+'lda_topic.png')
-# 代码12-11 LDA主题分析
+fig.savefig(result_deposit_path + 'lda_topic.png')
 
 # LDA主题分析
 pos_lda = models.LdaModel(pos_corpus, num_topics=3, id2word=pos_dict)
-neg_lda = models.LdaModel(neg_corpus, num_topics=3, id2word=neg_dict)
+neg_lda = models.LdaModel(neg_corpus, num_topics=2, id2word=neg_dict)
 print(pos_lda.print_topics(num_words=10))
 print(neg_lda.print_topics(num_words=10))
-with open(result_deposit_path+'pos_topics.txt', 'w') as f:
+with open(result_deposit_path + 'pos_topics.txt', 'w') as f:
     for topic in pos_lda.print_topics(num_words=10):
         f.write(f"{topic}\n")
 
-with open(result_deposit_path+'neg_topics.txt', 'w') as f:
+with open(result_deposit_path + 'neg_topics.txt', 'w') as f:
     for topic in neg_lda.print_topics(num_words=10):
         f.write(f"{topic}\n")
-=======
-import pandas as pd
-import gensim
-from gensim import corpora, models
-from nltk.corpus import stopwords
-import pyLDAvis.gensim
 
-def func1(result_deposit_path):
-    # 读取 Excel 数据
-    df = pd.read_excel(result_deposit_path+'segmented_comments.xlsx')
-    # 处理空值
-    df = df.fillna("")
-
-    # 清洗文本数据
-    texts = []
-    for i in range(len(df)):
-        text = df['Segmented Comment'][i].lower()
-        text = gensim.utils.simple_preprocess(text, deacc=True, min_len=2)
-        texts.append(text)
-
-    # 构建词典和文档-词矩阵
-    dictionary = corpora.Dictionary(texts)
-    corpus = [dictionary.doc2bow(text) for text in texts]
-
-    # LDA 主题模型训练
-    lda_model = models.LdaModel(corpus=corpus, id2word=dictionary, num_topics=4)
-
-    # 输出每个主题的关键词
-    for topic in lda_model.print_topics():
-        print(topic)
-
-    # 使用 pyLDAvis 可视化结果
-    vis = pyLDAvis.gensim.prepare(lda_model, corpus, dictionary)
-    pyLDAvis.save_html(vis, result_deposit_path+'lda_visualization.html')
-
-if __name__ == "__main__":
-    data_source_path = './Data/'
-    result_deposit_path = './Result/'
-    func1(result_deposit_path)
->>>>>>> origin/master
+# 使用 pyLDAvis 可视化结果
+vis_pos_lda = pyLDAvis.gensim.prepare(pos_lda, pos_corpus, pos_dict)
+vis_neg_lda = pyLDAvis.gensim.prepare(neg_lda, neg_corpus, neg_dict)
+# 保存可视化结果为 HTML 文件
+pyLDAvis.save_html(vis_pos_lda, result_deposit_path+'pos_lda_visualization.html')
+pyLDAvis.save_html(vis_neg_lda, result_deposit_path+'neg_lda_visualization.html')

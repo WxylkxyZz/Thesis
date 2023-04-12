@@ -194,5 +194,5 @@ if __name__ == "__main__":
     data_source_path = './Data/'
     result_deposit_path = './Result/'
     # data_cleaning(data_source_path, result_deposit_path)
-    # data_segmentation(data_source_path, result_deposit_path)
+    data_segmentation(data_source_path, result_deposit_path)
     pos_or_neg(result_deposit_path)
