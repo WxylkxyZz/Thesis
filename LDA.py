@@ -106,8 +106,8 @@ ax2.set_xlabel('负面评论LDA主题数寻优', fontproperties=font)
 fig.savefig(result_deposit_path + 'lda_topic.png')
 
 # LDA主题分析
-pos_lda = models.LdaModel(pos_corpus, num_topics=3, id2word=pos_dict)
-neg_lda = models.LdaModel(neg_corpus, num_topics=2, id2word=neg_dict)
+pos_lda = models.LdaModel(pos_corpus, num_topics=1, id2word=pos_dict)
+neg_lda = models.LdaModel(neg_corpus, num_topics=3, id2word=neg_dict)
 print(pos_lda.print_topics(num_words=10))
 print(neg_lda.print_topics(num_words=10))
 with open(result_deposit_path + 'pos_topics.txt', 'w') as f:
