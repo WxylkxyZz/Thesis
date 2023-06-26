@@ -1,6 +1,8 @@
-import requests
-from User_Agents import user_agents
 import random
+
+import requests
+
+from User_Agents import user_agents
 
 
 def generate_proxy_api_link(num):

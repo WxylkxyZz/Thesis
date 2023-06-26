@@ -1,10 +1,7 @@
-import pandas as pd
-import numpy as np
-import pandas as pd
-import re
 import jieba.posseg as psg
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from wordcloud import WordCloud
 
 
@@ -43,8 +40,8 @@ def get_word():
     stop_path = open(data_source_path + "cn_stopwords.txt", 'r', encoding='UTF-8')
     stop = stop_path.readlines()
     stopwordsupdate = ['哈哈哈', "喝", "买", "非常", '东方', '树叶', '饮料', '没有', '很', ' ',
-                       '都', '不','太','没','说','搬','放'
-                       '购买',
+                       '都', '不', '太', '没', '说', '搬', '放'
+                                                           '购买',
                        '特别', '一直', '夏天', 'hellip', 'helliphellip', '第二天', '茉莉花', '茉莉花茶',
                        '乌龙茶', '普洱茶',
                        '红茶', '绿茶', '农夫山泉', '越来越', '京东', '茶', '茶饮料', '淡淡的', '会',
@@ -70,6 +67,7 @@ def get_word():
 
     # 将结果写出
     result.to_csv(result_deposit_path + "word.csv", index=False, encoding='gbk')
+
 
 def get_posorneg():
     word = pd.read_csv(result_deposit_path + "word.csv", encoding='GBK')
@@ -185,9 +183,9 @@ def get_posorneg():
     posdata.to_csv(result_deposit_path + "posdata.csv", index=False, encoding='GBK')
     negdata.to_csv(result_deposit_path + "negdata.csv", index=False, encoding='GBK')
 
+
 if __name__ == "__main__":
     data_source_path = './Data/'
     result_deposit_path = './Result/'
     get_word()
     get_posorneg()
-

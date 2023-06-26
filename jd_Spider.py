@@ -1,11 +1,13 @@
-from User_Agents import user_agents
-import proxy_operation
 import asyncio
-import aiohttp
+import json
 import random
 import re
-import json
+
+import aiohttp
 import openpyxl
+
+import proxySetting
+from User_Agents import user_agents
 
 headers = {
     ":authority": "club.jd.com",
@@ -49,7 +51,7 @@ async def get_params(ID, start, end, score):
 
 
 async def Replenish():
-    plist = proxy_operation.get_proxy()
+    plist = proxySetting.get_proxy()
     for proxy in plist:
         proxies.append(proxy)
 

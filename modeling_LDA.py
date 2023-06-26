@@ -1,14 +1,11 @@
-import pandas as pd
-import numpy as np
-import re
 import itertools
+import re
+
 import matplotlib.pyplot as plt
-from gensim import corpora, models
+import numpy as np
 import pandas as pd
-import gensim
-from gensim import corpora, models
-from nltk.corpus import stopwords
 import pyLDAvis.gensim
+from gensim import corpora, models
 from matplotlib.font_manager import FontProperties
 
 data_source_path = './Data/'

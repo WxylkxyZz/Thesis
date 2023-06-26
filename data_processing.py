@@ -1,17 +1,15 @@
 import re
 from collections import Counter
+
 import jieba
 import matplotlib.pyplot as plt
-import nltk
 import numpy as np
 import openpyxl
 import pandas as pd
 from PIL import Image
-from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from wordcloud import WordCloud
-import jieba.posseg as pseg
 
 
 # 数据清洗主函数
